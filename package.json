@@ -1,0 +1,13 @@
+{
+  "name": "buymoney-tg-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for BuyMoney battle royale",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "grammy": "^1.21.1",
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
