@@ -25,11 +25,18 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ─── /start ───
 bot.command("start", async (ctx) => {
   const startParam = ctx.match; // referral code from deep link
+  const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
 
-  const keyboard = new InlineKeyboard()
-    .webApp("Play Now", WEB_URL)
-    .row()
-    .url("Share with friends", `https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent("Battle royale for your USDC. Deposit, survive 5 min, keep the pot. Play now:")}`);
+  // webApp buttons only work in private chats; use url buttons in groups
+  const keyboard = isGroup
+    ? new InlineKeyboard()
+        .url("Play Now", APP_URL)
+        .row()
+        .url("Share with friends", `https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent("Battle royale for your USDC. Deposit, survive 5 min, keep the pot. Play now:")}`)
+    : new InlineKeyboard()
+        .webApp("Play Now", WEB_URL)
+        .row()
+        .url("Share with friends", `https://t.me/share/url?url=${encodeURIComponent(APP_URL)}&text=${encodeURIComponent("Battle royale for your USDC. Deposit, survive 5 min, keep the pot. Play now:")}`);
 
   const welcome = [
     "Welcome to BuyMoney",
@@ -46,7 +53,6 @@ bot.command("start", async (ctx) => {
 
   await ctx.reply(welcome, { reply_markup: keyboard });
 
-  // If they came via referral link, log it
   if (startParam) {
     console.log(`User ${ctx.from?.id} started with referral: ${startParam}`);
   }
@@ -54,8 +60,10 @@ bot.command("start", async (ctx) => {
 
 // ─── /play ───
 bot.command("play", async (ctx) => {
-  const keyboard = new InlineKeyboard()
-    .webApp("Open BuyMoney", WEB_URL);
+  const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+  const keyboard = isGroup
+    ? new InlineKeyboard().url("Open BuyMoney", APP_URL)
+    : new InlineKeyboard().webApp("Open BuyMoney", WEB_URL);
 
   await ctx.reply("Tap to open BuyMoney:", { reply_markup: keyboard });
 });
@@ -143,7 +151,7 @@ async function announceWin(roundNumber, winnerName, winnerBag, playerCount, tota
   ].join("\n");
 
   const keyboard = new InlineKeyboard()
-    .webApp("Play Now", WEB_URL);
+    .url("Play Now", APP_URL);
 
   for (const chatId of ANNOUNCE_CHATS) {
     try {
@@ -210,6 +218,11 @@ async function pollForWins() {
 
 // Poll every 30 seconds for new wins
 setInterval(pollForWins, 30000);
+
+// ─── Error handler ───
+bot.catch((err) => {
+  console.error("Bot error:", err.message || err);
+});
 
 // ─── Start ───
 bot.start({
